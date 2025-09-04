@@ -86,21 +86,12 @@ class Job:
                  level: int = 1,
                  proficiency_bonus: int = 0,
                  spellcasting_ability = str,
-                 #hit_point_die_level_1: int = 10,
-                 #hit_point_die: int = 6,
-                 #rages: int = 0,
-                 #rage_damage: int = 0,
-                 #bardic_inspiration_die: int = 0,
                  ):
         self.name = name
         self.level = level
         self.proficiency_bonus = proficiency_bonus
         self.spellcasting_ability = spellcasting_ability
-        #self.hit_point_die_level_1 = hit_point_die_level_1
-        #self.hit_point_die = hit_point_die
-        #self.rages = rages
-        #self.rage_damage = rage_damage
-        #self.bardic_inspiration_die = bardic_inspiration_die
+
 
 
 
@@ -1857,6 +1848,3 @@ if __name__ == "__main__":
 
 
     run_rllib_example_script_experiment(base_config, args)
-
-
-
