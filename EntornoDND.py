@@ -1,4 +1,3 @@
-
 import gymnasium as gym
 import numpy as np
 import ray
@@ -75,35 +74,32 @@ def bresenham_line(x1, y1, x2, y2):
 
 class Job:
     """
-    This class manages the characters' jobs. These classes have the following attributes:
-    
+    This class manages the characters' classes. These classes have the following attributes:    
     name: Class name
     level: The character's class level
     proficiency_bonus: The class's proficiency bonus. 
     spellcasting_ability = A value indicating which character's proficiency is used to cast spells in this job.
-
-    Note: The remaining attributes can be removed because they were provisional.
     """
     def __init__(self,
                  name: str,
                  level: int = 1,
                  proficiency_bonus: int = 0,
                  spellcasting_ability = str,
-                 hit_point_die_level_1: int = 10,
-                 hit_point_die: int = 6,
-                 rages: int = 0,
-                 rage_damage: int = 0,
-                 bardic_inspiration_die: int = 0,
+                 #hit_point_die_level_1: int = 10,
+                 #hit_point_die: int = 6,
+                 #rages: int = 0,
+                 #rage_damage: int = 0,
+                 #bardic_inspiration_die: int = 0,
                  ):
         self.name = name
         self.level = level
         self.proficiency_bonus = proficiency_bonus
         self.spellcasting_ability = spellcasting_ability
-        self.hit_point_die_level_1 = hit_point_die_level_1
-        self.hit_point_die = hit_point_die
-        self.rages = rages
-        self.rage_damage = rage_damage
-        self.bardic_inspiration_die = bardic_inspiration_die
+        #self.hit_point_die_level_1 = hit_point_die_level_1
+        #self.hit_point_die = hit_point_die
+        #self.rages = rages
+        #self.rage_damage = rage_damage
+        #self.bardic_inspiration_die = bardic_inspiration_die
 
 
 
@@ -335,79 +331,112 @@ class DnDEnvironment(MultiAgentEnv):
     Updates game state and returns observations
     """
 
-    def __init__(self, config=None, max_turns=1000, map_size_x=5, map_size_y=5, walls = [(1, 1), (3, 3), (1, 3), (3, 1)] ,characters=[
+    def __init__(self, config=None, max_turns=1000, map_size_x=5, map_size_y=5, walls = [] ,characters=[
         Character(
                 name="player1",
-                role="Human Fighter (Sword & Board)",
+                role="Human Fighter (Hammer)",
                 level=1,
-                job=Job(name="Human Fighter", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=10, hit_point_die=10),
+                job=Job(name="Human Fighter", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=22,
-                hp=22,
+                max_hp=40,
+                hp=40,
                 status={},
                 resistances={},
-                strength=16,
-                dexterity=12,
+                strength=18,
+                dexterity=16,
                 constitution=16,
-                intelligence=10,
-                wisdom=12,
+                intelligence=8,
+                wisdom=8,
                 charisma=8,
-                armor_class=18,
+                armor_class=15,
                 position=(0, 0),
                 original_position=(0, 0),
                 attacks=[
                     Attack(
-                        name="Longsword",
-                        die_roll={1: 8},
+                        name="Maul",
+                        die_roll={2: 6},
                         number_turns_preparation=0,
                         superior_level_buff={0: 0},
                         bonus_attr="strength",
                         resource=["action_slots"],
-                        element="slashing",
+                        element="bludgeoning",
                         saving_throw="dexterity",
                         concentration=False,
                         range=1,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
-                        status_effects={}
+                        status_effects={"prone": ("constitution", 13)}
                     ),
                     Attack(
-                        name="Shove",
+                        name="Dash",
                         die_roll={0: 0},
                         number_turns_preparation=0,
                         superior_level_buff={0: 0},
                         bonus_attr="none",
                         resource=["action_slots"],
                         element="none",
-                        saving_throw="dexterity",
+                        saving_throw="none",
                         concentration=False,
-                        range=1,
-                        objetive="enemy",
+                        range=0,
+                        objetive="self",
                         aoe=0,
-                        self_status_effects={},
-                        status_effects={"prone": ("constitution", 10)}
+                        self_status_effects={"resources": ("movement_points", 30)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Hide",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"hide ": ("dexterity", 10)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Disengage",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"disengage ": ("disengage", 1)},
+                        status_effects={}
                     )
+
                    
                    
                 ],
-                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "second_wind": 1, "reactions": 1},
+                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "reactions": 1},
                 targets=[]
             ),
             Character(
                 name="player2",
                 role="Wood Elf Rogue (Scout)",
                 level=1,
-                job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=8, hit_point_die=6),
+                job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=17,
-                hp=17,
+                max_hp=28,
+                hp=28,
                 status={},
                 resistances={},
-                strength=10,
+                strength=12,
                 dexterity=16,
                 constitution=14,
-                intelligence=12,
+                intelligence=8,
                 wisdom=14,
                 charisma=8,
                 armor_class=15,
@@ -415,8 +444,8 @@ class DnDEnvironment(MultiAgentEnv):
                 original_position=(0, 4),
                 attacks=[
                     Attack(
-                        name="Shortbow",
-                        die_roll={1: 6},
+                        name="Crossbow, light",
+                        die_roll={1: 8},
                         number_turns_preparation=0,
                         superior_level_buff={},
                         bonus_attr="dexterity",
@@ -424,7 +453,7 @@ class DnDEnvironment(MultiAgentEnv):
                         element="piercing",
                         saving_throw="none",
                         concentration=False,
-                        range=16,
+                        range=12,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
@@ -437,13 +466,61 @@ class DnDEnvironment(MultiAgentEnv):
                         superior_level_buff={},
                         bonus_attr="dexterity",
                         resource=["action_slots"],
-                        element="piercing",
+                        element="slashing",
                         saving_throw="none",
                         concentration=False,
                         range=1,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Dash",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"resources": ("movement_points", 35)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Hide",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"hide ": ("dexterity", 10)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Disengage",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"disengage ": ("disengage", 1)},
                         status_effects={}
                     )
                 ],
@@ -452,82 +529,42 @@ class DnDEnvironment(MultiAgentEnv):
             ),
             Character(
                 name="player3",
-                role="Hobgoblin Soldier",
+                role="Awakened Tree",
                 level=1,
-                job=Job(name="Hobgoblin Soldier", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=8, hit_point_die=6),
+                job=Job(name="Awakened Tree", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="enemy",
-                max_hp=19,
-                hp=19,
+                max_hp=59,
+                hp=59,
                 status={},
-                resistances={},
-                strength=14,
-                dexterity=12,
-                constitution=14,
+                resistances={"bludgeoning":0.5, "piercing":0.5},
+                strength=19,
+                dexterity=6,
+                constitution=15,
                 intelligence=10,
                 wisdom=10,
-                charisma=9,
-                armor_class=16,
-                position=(4, 4),
-                original_position=(4, 4),
+                charisma=7,
+                armor_class=13,
+                position=(0, 3),
+                original_position=(0, 3),
                 attacks=[
                     Attack(
-                        name="Longsword",
-                        die_roll={1: 8},
+                        name="Slam",
+                        die_roll={2: 8},
                         number_turns_preparation=0,
                         superior_level_buff={},
                         bonus_attr="strength",
                         resource=["action_slots"],
-                        element="slashing",
+                        element="bludgeoning",
                         saving_throw="none",
                         concentration=False,
-                        range=1,
+                        range=2,
                         objetive="adventurer",
                         aoe=0,
                         self_status_effects={},
                         status_effects={}
                     )
                 ],
-                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "reactions": 1},
-                targets=[]
-            ),
-            Character(
-                name="player4",
-                role="Goblin Hexblade (Warlock NPC)",
-                level=1,
-                job=Job(name="Goblin Hexblade (Warlock NPC)", level=1, proficiency_bonus=2, spellcasting_ability = "charisma", hit_point_die_level_1=8, hit_point_die=6),
-                tag="adventurer",
-                max_hp=14,
-                hp=14,
-                status={},
-                resistances={},
-                strength=8,
-                dexterity=14,
-                constitution=12,
-                intelligence=10,
-                wisdom=10,
-                charisma=14,
-                armor_class=13,
-                position=(4, 0),
-                original_position=(4, 0),
-                attacks=[
-                    Attack(
-                        name="Eldritch Blast",
-                        die_roll={2: 10},
-                        number_turns_preparation=0,
-                        superior_level_buff={},
-                        bonus_attr="charisma",
-                        resource=["action_slots","spell_slots"],
-                        element="force",
-                        saving_throw="none",
-                        concentration=False,
-                        range=26,
-                        objetive="adventurer",
-                        aoe=0,
-                        self_status_effects={},
-                        status_effects={}
-                    )
-                ],
-                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "spell_slots": 3, "reactions": 1},
+                resources={"movement_points": 20, "action_slots":1, "bonus_action_slots":1, "reactions": 1},
                 targets=[]
             )
         ]
@@ -1114,8 +1151,6 @@ class DnDEnvironment(MultiAgentEnv):
                 self.characters[current_index].resources["action_slots"] = self.characters[current_index].original_resources["action_slots"]
             if "bonus_action_slots" in self.characters[current_index].resources and "bonus_action_slots" in self.characters[current_index].original_resources:
                 self.characters[current_index].resources["bonus_action_slots"] = self.characters[current_index].original_resources["bonus_action_slots"]
-            if "spell_slots" in self.characters[current_index].resources and "spell_slots" in self.characters[current_index].original_resources:
-                self.characters[current_index].resources["spell_slots"] = self.characters[current_index].original_resources["spell_slots"]
             if "reactions" in self.characters[current_index].resources and "reactions" in self.characters[current_index].original_resources:
                 self.characters[current_index].resources["reactions"] = self.characters[current_index].original_resources["reactions"]
             self.characters[current_index].targets = []
@@ -1516,76 +1551,109 @@ class DnDEnvironment(MultiAgentEnv):
 characcters=[
         Character(
                 name="player1",
-                role="Human Fighter (Sword & Board)",
+                role="Human Fighter (Hammer)",
                 level=1,
-                job=Job(name="Human Fighter", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=10, hit_point_die=10),
+                job=Job(name="Human Fighter", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=22,
-                hp=22,
+                max_hp=40,
+                hp=40,
                 status={},
                 resistances={},
-                strength=16,
-                dexterity=1000,
+                strength=18,
+                dexterity=16,
                 constitution=16,
-                intelligence=10,
-                wisdom=12,
+                intelligence=8,
+                wisdom=8,
                 charisma=8,
-                armor_class=18,
+                armor_class=15,
                 position=(0, 0),
                 original_position=(0, 0),
                 attacks=[
                     Attack(
-                        name="Longsword",
-                        die_roll={1: 8},
+                        name="Maul",
+                        die_roll={2: 6},
                         number_turns_preparation=0,
                         superior_level_buff={0: 0},
                         bonus_attr="strength",
                         resource=["action_slots"],
-                        element="slashing",
+                        element="bludgeoning",
                         saving_throw="dexterity",
                         concentration=False,
                         range=1,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
-                        status_effects={}
+                        status_effects={"prone": ("constitution", 13)}
                     ),
                     Attack(
-                        name="Shove",
+                        name="Dash",
                         die_roll={0: 0},
                         number_turns_preparation=0,
                         superior_level_buff={0: 0},
                         bonus_attr="none",
                         resource=["action_slots"],
                         element="none",
-                        saving_throw="dexterity",
+                        saving_throw="none",
                         concentration=False,
-                        range=1,
-                        objetive="enemy",
+                        range=0,
+                        objetive="self",
                         aoe=0,
-                        self_status_effects={},
-                        status_effects={"prone": ("constitution", 10)}
+                        self_status_effects={"resources": ("movement_points", 30)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Hide",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"hide ": ("dexterity", 10)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Disengage",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"disengage ": ("disengage", 1)},
+                        status_effects={}
                     )
+
                    
                    
                 ],
-                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "second_wind": 1, "reactions": 1},
+                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "reactions": 1},
                 targets=[]
             ),
             Character(
                 name="player2",
                 role="Wood Elf Rogue (Scout)",
                 level=1,
-                job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=8, hit_point_die=6),
+                job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=17,
-                hp=17,
+                max_hp=28,
+                hp=28,
                 status={},
                 resistances={},
-                strength=10,
+                strength=12,
                 dexterity=16,
                 constitution=14,
-                intelligence=12,
+                intelligence=8,
                 wisdom=14,
                 charisma=8,
                 armor_class=15,
@@ -1593,8 +1661,8 @@ characcters=[
                 original_position=(0, 4),
                 attacks=[
                     Attack(
-                        name="Shortbow",
-                        die_roll={1: 6},
+                        name="Crossbow, light",
+                        die_roll={1: 8},
                         number_turns_preparation=0,
                         superior_level_buff={},
                         bonus_attr="dexterity",
@@ -1602,7 +1670,7 @@ characcters=[
                         element="piercing",
                         saving_throw="none",
                         concentration=False,
-                        range=16,
+                        range=12,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
@@ -1615,13 +1683,61 @@ characcters=[
                         superior_level_buff={},
                         bonus_attr="dexterity",
                         resource=["action_slots"],
-                        element="piercing",
+                        element="slashing",
                         saving_throw="none",
                         concentration=False,
                         range=1,
                         objetive="enemy",
                         aoe=0,
                         self_status_effects={},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Dash",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"resources": ("movement_points", 35)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Hide",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"hide ": ("dexterity", 10)},
+                        status_effects={}
+                    ),
+                    Attack(
+                        name="Disengage",
+                        die_roll={0: 0},
+                        number_turns_preparation=0,
+                        superior_level_buff={0: 0},
+                        bonus_attr="none",
+                        resource=["action_slots"],
+                        element="none",
+                        saving_throw="none",
+                        concentration=False,
+                        range=0,
+                        objetive="self",
+                        aoe=0,
+                        self_status_effects={"disengage ": ("disengage", 1)},
                         status_effects={}
                     )
                 ],
@@ -1630,35 +1746,35 @@ characcters=[
             ),
             Character(
                 name="player3",
-                role="Hobgoblin Soldier",
+                role="Awakened Tree",
                 level=1,
-                job=Job(name="Hobgoblin Soldier", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom", hit_point_die_level_1=8, hit_point_die=6),
+                job=Job(name="Awakened Tree", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="enemy",
-                max_hp=19,
-                hp=19,
+                max_hp=59,
+                hp=59,
                 status={},
-                resistances={},
-                strength=14,
-                dexterity=12,
-                constitution=14,
+                resistances={"bludgeoning":0.5, "piercing":0.5},
+                strength=19,
+                dexterity=6,
+                constitution=15,
                 intelligence=10,
                 wisdom=10,
-                charisma=9,
-                armor_class=16,
-                position=(4, 4),
-                original_position=(4, 4),
+                charisma=7,
+                armor_class=13,
+                position=(0, 3),
+                original_position=(0, 3),
                 attacks=[
                     Attack(
-                        name="Longsword",
-                        die_roll={1: 8},
+                        name="Slam",
+                        die_roll={2: 8},
                         number_turns_preparation=0,
                         superior_level_buff={},
                         bonus_attr="strength",
                         resource=["action_slots"],
-                        element="slashing",
+                        element="bludgeoning",
                         saving_throw="none",
                         concentration=False,
-                        range=1,
+                        range=2,
                         objetive="adventurer",
                         aoe=0,
                         self_status_effects={},
@@ -1666,46 +1782,6 @@ characcters=[
                     )
                 ],
                 resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "reactions": 1},
-                targets=[]
-            ),
-            Character(
-                name="player4",
-                role="Goblin Hexblade (Warlock NPC)",
-                level=1,
-                job=Job(name="Goblin Hexblade (Warlock NPC)", level=1, proficiency_bonus=2, spellcasting_ability = "charisma", hit_point_die_level_1=8, hit_point_die=6),
-                tag="enemy",
-                max_hp=14,
-                hp=14,
-                status={},
-                resistances={},
-                strength=8,
-                dexterity=14,
-                constitution=12,
-                intelligence=10,
-                wisdom=10,
-                charisma=14,
-                armor_class=13,
-                position=(1, 0),
-                original_position=(1, 0),
-                attacks=[
-                    Attack(
-                        name="Eldritch Blast",
-                        die_roll={2: 10},
-                        number_turns_preparation=0,
-                        superior_level_buff={},
-                        bonus_attr="charisma",
-                        resource=["action_slots","spell_slots"],
-                        element="force",
-                        saving_throw="none",
-                        concentration=False,
-                        range=26,
-                        objetive="adventurer",
-                        aoe=0,
-                        self_status_effects={},
-                        status_effects={}
-                    )
-                ],
-                resources={"movement_points": 30, "action_slots":1, "bonus_action_slots":1, "spell_slots": 3, "reactions": 1},
                 targets=[]
             )
         ]
@@ -1720,13 +1796,13 @@ if __name__ == "__main__":
     )
     parser.set_defaults(
         enable_new_api_stack=True,
-        num_agents=4,
+        num_agents=3,
     )
     args = parser.parse_args()
     args.checkpoint_freq = 10
     # Coment this if you dont want to use a checkpoint
-    # args.checkpoint_path = "C:/Users/jadlp/ray_results/PPO_2025-07-16_20-25-59/PPO_DnDEnvironment_523de_00000_0_2025-07-16_20-25-59/checkpoint_000009"
-    assert args.num_agents == 4, "Must set --num-agents= equal to the number of players when running this script!"
+    # args.checkpoint_path = "path_to_checkpoint/checkpoint"
+    assert args.num_agents == 3, "Must set --num-agents= equal to the number of players when running this script!"
 
 
     base_config = (
@@ -1737,11 +1813,11 @@ if __name__ == "__main__":
                         "max_turns":1000,
                         "map_size_x":5,
                         "map_size_y":5,
-                        "walls": [(1, 1), (3, 3), (1, 3), (3, 1)],
+                        "walls": [],
                         "characters": characcters
                      })
         .multi_agent(
-            policies={"player1", "player2", "player3", "player4"},
+            policies={"player1", "player2", "player3"},
             policy_mapping_fn=lambda agent_id, episode, **kw: agent_id,
         )
         .env_runners(
@@ -1751,5 +1827,7 @@ if __name__ == "__main__":
 
 
     run_rllib_example_script_experiment(base_config, args)
+
+
 
 
