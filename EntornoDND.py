@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 import ray
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.tune.registry import get_trainable_cls, register_env  # noqa
+from ray.tune.registry import get_trainable_cls, register_env
 from ray.rllib.utils.test_utils import (
     add_rllib_example_script_args,
     run_rllib_example_script_experiment,
@@ -11,13 +11,15 @@ from typing import List, Tuple, Dict
 from copy import copy
 from gymnasium.spaces import Discrete, Box
 import torch
+from datetime import datetime
+import os
 
 
 
 
 def get_area_spell_coordinates(center, radius, grid_size):
     """
-    What this function does is calculate, given a: 
+    Given a: 
     center: position on the board (normally the position of the initial enemy)
     radius: the area of the attack/spell
     grid_size: the size of the board
@@ -32,7 +34,6 @@ def get_area_spell_coordinates(center, radius, grid_size):
         for y in range(y_center - radius, y_center + radius + 1):
             # Check if coordinates are within grid bounds
             if 0 <= x < width and 0 <= y < height:
-                # Calculate Manhattan distance
                 distance = abs(x - x_center) + abs(y - y_center)
                 if distance <= radius:
                     affected_coords.append((x, y))
@@ -43,7 +44,7 @@ def get_area_spell_coordinates(center, radius, grid_size):
 
 def bresenham_line(x1, y1, x2, y2):
     """
-    This function, given the x and y positions of a character and the x and y positions on a board, 
+    Given the x and y positions of a character and the x and y positions on a board, 
     calculates which positions are between those two positions if a straight line were drawn based on Bresenhan's algorithm. 
     This function will be used to check if there is a wall or an obstacle between character 1 and character 2.
     """
@@ -74,7 +75,7 @@ def bresenham_line(x1, y1, x2, y2):
 
 class Job:
     """
-    This class manages the characters' classes. These classes have the following attributes:    
+    This class manages the character classes. These classes have the following attributes:    
     name: Class name
     level: The character's class level
     proficiency_bonus: The class's proficiency bonus. 
@@ -331,7 +332,7 @@ class DnDEnvironment(MultiAgentEnv):
     Updates game state and returns observations
     """
 
-    def __init__(self, config=None, max_turns=1000, map_size_x=5, map_size_y=5, walls = [] ,characters=[
+    def __init__(self, config=None, max_turns=3000, map_size_x=5, map_size_y=5, walls = [] ,characters=[
         Character(
                 name="player1",
                 role="Human Fighter (Hammer)",
@@ -429,8 +430,8 @@ class DnDEnvironment(MultiAgentEnv):
                 level=1,
                 job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=28,
-                hp=28,
+                max_hp=32,
+                hp=32,
                 status={},
                 resistances={},
                 strength=12,
@@ -652,7 +653,33 @@ class DnDEnvironment(MultiAgentEnv):
 
 
 
-
+    def _log_battle_results(self, winner):
+        """Helper method to log battle results to a text file"""
+        # Create the filename
+        filename = "battle_results.txt"
+        
+        # Check if file exists to determine if we need to write headers
+        file_exists = os.path.isfile(filename)
+        
+        # Open the file in append mode
+        with open(filename, 'a') as file:
+            # Write header if file doesn't exist
+            if not file_exists:
+                file.write("BATTLE RESULTS LOG\n")
+                file.write("=" * 50 + "\n")
+            
+            # Write current date and time
+            file.write(f"\nBattle on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            file.write("-" * 30 + "\n")
+            
+            # Write character HP information
+            file.write("CHARACTER HP STATUS:\n")
+            for char in self.characters:
+                file.write(f"{char.name} ({char.tag}): {char.hp}/{char.max_hp} HP\n")
+            
+            # Write the winner
+            file.write(f"\nWINNING TEAM: {winner}\n")
+            file.write("=" * 50 + "\n")
 
 
 
@@ -1508,6 +1535,7 @@ class DnDEnvironment(MultiAgentEnv):
                 elif char.tag == 'enemy' and char.name in rewards:
                     rewards[char.name] -= 5
             self.last_action = action
+            self._log_battle_results("Adventurers")
             #self.render()
             terminateds["__all__"] = True
 
@@ -1520,6 +1548,7 @@ class DnDEnvironment(MultiAgentEnv):
                 elif char.tag == 'enemy' and char.name in rewards:
                     rewards[char.name] += 10
             self.last_action = action
+            self._log_battle_results("Enemies")
             #self.render()
             terminateds["__all__"] = True
 
@@ -1527,6 +1556,7 @@ class DnDEnvironment(MultiAgentEnv):
         if self.current_turn >= self.max_turns:
             self.last_action = action
             #self.render()
+            self._log_battle_results("Draw - Max Turns Reached")
             terminateds["__all__"] = True
            
 
@@ -1646,8 +1676,8 @@ characcters=[
                 level=1,
                 job=Job(name="Wood Elf Rogue", level=1, proficiency_bonus=2, spellcasting_ability = "wisdom"),
                 tag="adventurer",
-                max_hp=28,
-                hp=28,
+                max_hp=32,
+                hp=32,
                 status={},
                 resistances={},
                 strength=12,
@@ -1792,7 +1822,7 @@ characcters=[
 
 if __name__ == "__main__":
     parser = add_rllib_example_script_args(
-        default_iters=300, default_timesteps=1200000, default_reward=2000
+        default_iters=300, default_timesteps=1200000, default_reward=700
     )
     parser.set_defaults(
         enable_new_api_stack=True,
@@ -1801,7 +1831,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.checkpoint_freq = 10
     # Coment this if you dont want to use a checkpoint
-    # args.checkpoint_path = "path_to_checkpoint/checkpoint"
+    #args.checkpoint_path = "C:\\Users\\jadlp\\OneDrive\\Documentos\\TFM\\PPO_2025-08-29_14-15-40\\PPO_DnDEnvironment_e0e7c_00000_0_2025-08-29_14-15-40\\checkpoint_000017"
     assert args.num_agents == 3, "Must set --num-agents= equal to the number of players when running this script!"
 
 
@@ -1810,7 +1840,7 @@ if __name__ == "__main__":
         .get_default_config()
         .environment(DnDEnvironment,
                      env_config={
-                        "max_turns":1000,
+                        "max_turns":3000,
                         "map_size_x":5,
                         "map_size_y":5,
                         "walls": [],
@@ -1827,7 +1857,6 @@ if __name__ == "__main__":
 
 
     run_rllib_example_script_experiment(base_config, args)
-
 
 
 
