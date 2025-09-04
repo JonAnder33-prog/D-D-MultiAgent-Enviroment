@@ -13,7 +13,8 @@ from gymnasium.spaces import Discrete, Box
 import torch
 from datetime import datetime
 import os
-
+import re
+from collections import defaultdict
 
 
 
@@ -1808,7 +1809,65 @@ characcters=[
         ]
 
 
+def analyze_battle_results(filename="battle_results.txt", max_episodes=30):
+    """
+    Analyze battle results from the text file and display statistics for the last max_episodes executions.
+    """
+    if not os.path.isfile(filename):
+        print(f"File {filename} not found.")
+        return
+    
+    with open(filename, 'r') as file:
+        content = file.read()
+    
+    battles = content.split("=" * 50)
 
+    recent_battles = battles[-max_episodes:] if len(battles) > max_episodes else battles
+    total_battles = len(recent_battles)
+    
+    character_stats = defaultdict(lambda: {'survived': 0, 'total_hp': 0})
+    
+    print(f"Returning episode: {total_battles}/{max_episodes}:")
+    
+    for i, battle in enumerate(recent_battles, 1):
+        if not battle.strip():
+            continue
+                    
+        # Extract character HP information
+        hp_pattern = r"(.+?) \(.+?\): (\d+)/(\d+) HP"
+        hp_matches = re.findall(hp_pattern, battle)
+        
+        # Count survivors
+        survivors = 0
+        hp_values = []
+        
+        for match in hp_matches:
+            char_name, current_hp, max_hp = match
+            current_hp = int(current_hp)
+            
+            if current_hp > 0:
+                survivors += 1
+                status = "ALIVE"
+            else:
+                status = "DEAD"
+                
+            hp_values.append((char_name, current_hp, status))
+            
+            # Update character stats
+            character_stats[char_name]['survived'] += 1 if current_hp > 0 else 0
+            character_stats[char_name]['total_hp'] += current_hp
+        
+        print(f"Running episode {i}/{total_battles}")
+        print(f"Episode {i} completed: {survivors} characters survived")
+        print("Final HP values:")
+        for char_name, hp, status in hp_values:
+            print(f"\t{char_name}: {hp} HP ({status})")
+        print()
+    print("\t")
+    print("Final Results:")
+    for char_name, stats in character_stats.items():
+        survival_rate = (stats['survived'] / total_battles) * 100
+        print(f"{char_name}: {stats['survived']}/{total_battles} ({survival_rate:.1f}%)")
 
 
 if __name__ == "__main__":
@@ -1848,3 +1907,6 @@ if __name__ == "__main__":
 
 
     run_rllib_example_script_experiment(base_config, args)
+    analyze_battle_results(filename="battle_results.txt")
+
+
